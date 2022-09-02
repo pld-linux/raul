@@ -1,19 +1,21 @@
 Summary:	C++ library for realtime audio applications
 Summary(pl.UTF-8):	Biblioteka C++ do aplikacji dźwiękowych czasu rzeczywistego
 Name:		raul
-Version:	0.8.0
+Version:	2.0.0
 Release:	1
-License:	GPL v2+
+License:	GPL v3+
 Group:		Libraries
-Source0:	http://download.drobilla.net/%{name}-%{version}.tar.bz2
-# Source0-md5:	8fa71a20db81fbed5fb6516dea383ea8
+Source0:	http://download.drobilla.net/%{name}-%{version}.tar.xz
+# Source0-md5:	4660c4a468bca2106d7d57c37ccd1ace
 URL:		http://drobilla.net/software/raul/
-BuildRequires:	boost-devel
-BuildRequires:	glib2-devel >= 1:2.14.0
-BuildRequires:	libstdc++-devel
+BuildRequires:	libstdc++-devel >= 6:7
+BuildRequires:	meson >= 0.49.2
+BuildRequires:	ninja >= 1.5
 BuildRequires:	pkgconfig
-BuildRequires:	python
-Requires:	glib2 >= 1:2.14.0
+BuildRequires:	rpmbuild(macros) >= 1.736
+BuildRequires:	tar >= 1:1.22
+BuildRequires:	xz
+BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -29,9 +31,8 @@ rzeczywistego.
 Summary:	Header files for raul library
 Summary(pl.UTF-8):	Pliki nagłówkowe biblioteki raul
 Group:		Development/Libraries
-Requires:	%{name} = %{version}-%{release}
-Requires:	boost-devel
-Requires:	glib2-devel >= 1:2.14.0
+Requires:	libstdc++-devel >= 6:7
+Obsoletes:	raul < 2
 
 %description devel
 Header files for raul library.
@@ -43,38 +44,24 @@ Pliki nagłówkowe biblioteki raul.
 %setup -q
 
 %build
-CXX="%{__cxx}" \
-CXXFLAGS="%{rpmcxxflags}" \
-./waf configure \
-	--prefix=%{_prefix} \
-	--libdir=%{_libdir} \
-	--strict
+%meson build
 
-./waf -v
+%ninja_build -C build
 
 %install
 rm -rf $RPM_BUILD_ROOT
 
-./waf install \
-	--destdir=$RPM_BUILD_ROOT
+%ninja_install -C build
 
-# let rpm autogenerate dependencies
-chmod 755 $RPM_BUILD_ROOT%{_libdir}/lib*.so*
+# make package noarch
+install -d $RPM_BUILD_ROOT%{_npkgconfigdir}
+%{__mv} $RPM_BUILD_ROOT{%{_pkgconfigdir},%{_npkgconfigdir}}/raul-2.pc
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-%post	-p /sbin/ldconfig
-%postun	-p /sbin/ldconfig
-
-%files
-%defattr(644,root,root,755)
-%doc AUTHORS ChangeLog README
-%attr(755,root,root) %{_libdir}/libraul.so.*.*.*
-%attr(755,root,root) %ghost %{_libdir}/libraul.so.10
-
 %files devel
 %defattr(644,root,root,755)
-%attr(755,root,root) %{_libdir}/libraul.so
-%{_includedir}/raul
-%{_pkgconfigdir}/raul.pc
+%doc NEWS README.md
+%{_includedir}/raul-2
+%{_npkgconfigdir}/raul-2.pc
